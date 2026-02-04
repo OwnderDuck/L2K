@@ -89,8 +89,8 @@ double getDiskBusy(const string &dev) {
 }
 int main() {
     string pathNumlock = GetLedPath("numlock"),
-                 pathCapslock = GetLedPath("capslock"),
-                 pathScrolllock = GetLedPath("scrolllock");
+           pathCapslock = GetLedPath("capslock"),
+           pathScrolllock = GetLedPath("scrolllock");
     int fdCpu = open(pathNumlock.c_str(), O_WRONLY);
     int fdRam = open(pathCapslock.c_str(), O_WRONLY);
     int fdDisk = open(pathScrolllock.c_str(), O_WRONLY);
@@ -107,10 +107,14 @@ int main() {
     long duration = 0;
     int tick = 0;
 
-    cout << "Start..." << endl;
-
+    printf("==================L2K===================\n");
+    printf("         Load 2 KeyboardLED v1.0        \n");
+    printf("   Map system metrics to keyboard LEDs  \n");
+    printf("========================================\n");
+    
     while (true) {
         auto tick_start = chrono::steady_clock::now();
+
         tick++;
         next_tick += chrono::milliseconds(10);
 
@@ -118,8 +122,8 @@ int main() {
             cpuUsage = getCpu();
             ramUsage = getRam();
             diskUsage = getDiskBusy("sda") * 100;
-            printf("\rCPU:%3d%% RAM:%3d%% DSK:%3d%% MSPT:%6.2fus    ", cpuUsage,
-                         ramUsage, diskUsage, (double)duration / 1000.0);
+            printf("\rCPU:%3d%% RAM:%3d%% DSK:%3d%% MSPT:%6.2fus    "
+                , cpuUsage, ramUsage, diskUsage, (double)duration / 1000.0);
             fflush(stdout);
         }
 
