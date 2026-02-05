@@ -1,0 +1,51 @@
+**Warning: Lacks thorough testing!!!**
+
+**You’re still helpful, even if it's just for translations.**
+
+**Translation: Native English speakers (or fluent speakers) needed to rewrite i18n and README_EN.md.**
+
+# L2K (Load 2 KeyboardLED) v3.2.1
+
+Ultra-lightweight Linux system monitor. Gone are the complex GUIs—we use LEDs for display.
+
+No LEDs? You’ve got three on your keyboard. No keyboard backlights? Try your NIC or disk indicators—any kernel-managed LED will do.
+
+If you lack even those, you're on your own.
+## Features
+- **Real-time Monitoring**: Track CPU, RAM, and Disk utilization (multi-disk support included).
+- **闪烁**: 根据系统负载闪烁 LED。
+- **可定制**: 通过 `/etc/l2k.conf` 自定义 LED映射关系、阈值与闪烁频率。
+- **静默模式**：默认在后台静默运行。
+- **多语言支持**: 支持中英文。
+## 使用
+### 运行
+需要 **root** 权限，因为要写入 `/sys/class/leds/` 下的灯。
+
+默认为后台模式运行。
+
+支持命令行参数：
+- `-f` 以前台模式启动。
+- `-h` 显示帮助。
+- `-v` 版本号？
+
+使用 `sudo pkill l2k` 来关闭。（应该有安全关闭的）。
+
+### 配置
+
+存在 `/etc/l2k.conf`。
+
+忽略所有 `#` 开头的行：
+
+第 1 行， 2 个整数。分别代表灯常亮该指标的阀值（0-100）与负载为 1% 时的闪烁周期（以 tick 为单位，1 个 10ms ）。
+
+接下来一直到文件末尾，每行 2 到 3 个以空格分割的字符串，分别代表：
+- 灯名字（会自动搜索，你可以写 “numlock” 等）。
+- 指标名，可选项：“CPU”/“RAM“/”DISK“。
+- 磁盘名，如 “sda”、“sdb”等。（仅在指标名为 DISK 时生效）
+
+### 编译
+Linux 下，需要 C++17。
+```bash
+g++ --std=c++17 l2k.cpp -o l2k
+```
+如果找不到 `i18n.h`，就默认使用英文。
