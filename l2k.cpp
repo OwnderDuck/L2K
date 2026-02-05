@@ -12,7 +12,16 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#define L2KVER "3.2"
+#define L2KVER "3.2.1"
+
+#if defined(__GNUC__) || defined(__clang__)
+    #define LIKELY(x)   __builtin_expect(!!(x), 1)
+    #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+    #define LIKELY(x)   (x)
+    #define UNLIKELY(x) (x)
+#endif
+
 using namespace std;
 namespace fs = filesystem;
 
@@ -97,7 +106,7 @@ void readConfig(vector<ledInfo> &v, int &th, int &fr) {
         ofstream outfile(config_path);
         if (outfile) {
             outfile << "#================= L2K ==================#" << endl;
-            outfile << "#         Load 2 KeyboardLED v" L2KVER << "        #" << endl;
+            outfile << "#         Load 2 KeyboardLED v" L2KVER << "      #" << endl;
             outfile << "#   Map system metrics to keyboard LEDs  #" << endl;
             outfile << "#============================= OwnderDuck#" << endl;
             outfile << endl;
@@ -262,7 +271,7 @@ int main(int argc, char *argv[]) {
             break;
         case 'h': {
             printf("================= L2K ==================\n");
-            printf("         Load 2 KeyboardLED v" L2KVER "        \n");
+            printf("         Load 2 KeyboardLED v" L2KVER "      \n");
             printf("   Map system metrics to keyboard LEDs  \n");
             printf("============================= OwnderDuck\n");
             cout << "[L2K] HELP: " << lang->help_front << endl;
@@ -282,7 +291,7 @@ int main(int argc, char *argv[]) {
         }
     }
     printf("================= L2K ==================\n");
-    printf("         Load 2 KeyboardLED v" L2KVER "        \n");
+    printf("         Load 2 KeyboardLED v" L2KVER "      \n");
     printf("   Map system metrics to keyboard LEDs  \n");
     printf("============================= OwnderDuck\n");
 
@@ -353,25 +362,25 @@ int main(int argc, char *argv[]) {
                 fflush(stdout);
             }
         }
-        auto processLed = [&](int usage, bool &state, int fd) {
-            if (usage > threshold) {
+        auto processLed = [threshold, frequency, &tick](int usage, bool &state, int fd) {
+            if (LIKELY(usage > 0 && usage <= threshold)) { 
+                int interval = frequency - (usage * frequency / threshold);
+                if (interval < 2) interval = 2;
+
+                bool should_be_on = (tick % interval == 0);
+                if (should_be_on != state) {
+                    state = should_be_on;
+                    (void)pwrite(fd, state ? "1" : "0", 1, 0);
+                }
+            }
+            else if (usage > threshold) {
                 if (!state) {
                     state = true;
                     (void)pwrite(fd, "1", 1, 0);
                 }
-            } else if (usage <= 0) {
+            }
+            else { 
                 if (state) {
-                    state = false;
-                    (void)pwrite(fd, "0", 1, 0);
-                }
-            } else {
-                double interval = frequency - (usage * frequency * 1.0 / threshold);
-                if (interval < 2) interval = 2;
-                if (usage == 1) interval = 1;
-                if (tick % (int)interval == 0) {
-                    state = true;
-                    (void)pwrite(fd, "1", 1, 0);
-                } else if (state) {
                     state = false;
                     (void)pwrite(fd, "0", 1, 0);
                 }
