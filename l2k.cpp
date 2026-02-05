@@ -5,50 +5,68 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <pwd.h>
 #include <string>
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#include <pwd.h>
-#define L2KVER "3.0"
+#define L2KVER "3.2"
 using namespace std;
 namespace fs = filesystem;
 
 // --- I18N Logic Start ---
-#if __has_include("i18n.h")
-#include "i18n.h"
-#define HAS_I18N
-#else
+/* clang-format off */
 struct LanguagePack {
-    const char* info_load_conf       = "Loading configuration from: ";
-    const char* info_create_conf     = "Default configuration created with global write permissions.";
-    const char* info_ask_auth       = "Authentication required: Type 'frog' and press Enter to grant write access to l2k.conf, or any other key to skip.";
-    const char* info_daemon          = "Running in daemon mode (background).";
-    const char* info_stop            = "To stop the service, run: sudo pkill l2k";
-    const char* help_stop            = "Stop: sudo pkill l2k";
-    const char* help_front           = "Foreground mode: Use -f to keep the process in your terminal.";
-    const char* help_version         = "Version: Use -v to display current version.";
-    const char* help_config          = "Configuration: Edit /etc/l2k.conf to customize LED mappings.";
-    const char* conf_th_desc         = "Threshold (0-100) for constant LED light.";
-    const char* conf_fr_desc         = "Base flash interval at 0% load (in 10ms ticks).";
-    const char* conf_map_led         = "LED_NAME  METRIC(CPU/RAM/DISK)  DISK_NAME(if applicable). Example:";
-    const char* fatal_chmod          = "Failed to set global write permissions (chmod 0666).";
-    const char* fatal_open_led1      = "Permission denied while accessing ";
-    const char* fatal_open_led2      = "Try running with 'sudo' or check if the device exists.";
-    const char* fatal_daemon         = "Failed to daemonize process.";
-    const char* fatal_failed_to_create1 = "Could not create configuration file at ";
-    const char* fatal_failed_to_create2 = ". Please check directory permissions.";
-} en_fallback;
-#endif
+    const char *info_load_conf; const char *info_create_conf; const char *info_ask_auth; const char *info_daemon; const char *info_stop;
+    const char *help_stop; const char *help_front; const char *help_version; const char *help_config;
+    const char *conf_th_desc; const char *conf_fr_desc; const char *conf_map_led;
+    const char *fatal_chmod; const char *fatal_open_led1; const char *fatal_open_led2; const char *fatal_daemon;
+    const char *fatal_failed_to_create1; const char *fatal_failed_to_create2; const char *fatal_no_led; const char *fatal_no_look;
+};
 
+#define HAS_REAL_STRUCT
+_Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-W#pragma-messages\"")
+#pragma message("Compiling L2K Version: " L2KVER)
+#if __has_include("i18n.h")
+    #pragma message("I18N support enabled.")
+    _Pragma("clang diagnostic pop")
+    #include "i18n.h"
+    #define HAS_I18N
+#endif
+    _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-W#warnings\"")
+    #warning "Warning: i18n.h not found, falling back to English."
+    _Pragma("clang diagnostic pop")
+const LanguagePack en_fallback = {
+    "Loading configuration from: ",
+    "Default configuration created with global write permissions.",
+    "Authentication required: Type 'frog' and press Enter to grant write "
+    "access to l2k.conf, or any other key to skip.",
+    "Running in daemon mode (background).",
+    "To stop the service, run: sudo pkill l2k",
+    "Stop: sudo pkill l2k",
+    "Foreground mode: Use -f to keep the process in your terminal.",
+    "Version: Use -v to display current version.",
+    "Configuration: Edit /etc/l2k.conf to customize LED mappings.",
+    "Threshold (0-100) for constant LED light.",
+    "Base flash interval at 1% load (in 10ms ticks).",
+    "LED_NAME  METRIC(CPU/RAM/DISK)  DISK_NAME(if applicable). Example:",
+    "Failed to set global write permissions (chmod 0666).",
+    "Permission denied while accessing ",
+    "Try running with 'sudo' or check if the device exists.",
+    "Failed to daemonize process.",
+    "Could not create configuration file at ",
+    ". Please check directory permissions.",
+    "were not found on this system. Check /etc/l2k.conf",
+    "were not found on this system. Check /etc/l2k.conf"
+};
 #ifdef HAS_I18N
-const LanguagePack *lang = &en_US;
+    const LanguagePack *lang = &en_US; // 指向 i18n.h 里的数据
 #else
-const LanguagePack *lang = &en_fallback;
+    const LanguagePack *lang = &en_fallback;
 #endif
-
+/* clang-format on */
 void init_i18n() {
 #ifdef HAS_I18N
     char *env = getenv("LANG");
@@ -57,6 +75,7 @@ void init_i18n() {
     }
 #endif
 }
+
 // --- I18N Logic End ---
 
 struct ledInfo {
@@ -78,7 +97,7 @@ void readConfig(vector<ledInfo> &v, int &th, int &fr) {
         ofstream outfile(config_path);
         if (outfile) {
             outfile << "#================= L2K ==================#" << endl;
-            outfile << "#         Load 2 KeyboardLED v" L2KVER<<"        #" << endl;
+            outfile << "#         Load 2 KeyboardLED v" L2KVER << "        #" << endl;
             outfile << "#   Map system metrics to keyboard LEDs  #" << endl;
             outfile << "#============================= OwnderDuck#" << endl;
             outfile << endl;
@@ -125,12 +144,20 @@ void readConfig(vector<ledInfo> &v, int &th, int &fr) {
             string fullName = GetLedName(name);
             string path     = base_path + fullName + "/brightness";
             v.push_back({fullName, path, type, "frog"});
+
             if (type == "DISK") {
                 string diskName;
                 ss >> diskName;
                 v.back().diskName = diskName;
             }
-            cout << "[L2K] BIND: " << name << " -> " << type << " (Device: " << path << ")" << endl;
+            if (type == "CPU" || type == "RAM" || type == "DISK") {
+                cout << "[L2K] BIND: " << name << " -> " << type;
+                if (type == "DISK") cout << " " << v.back().diskName;
+                cout << " (Device: " << path << ")" << endl;
+            } else {
+                cout << "[L2K] FATAL: " << type << " " << lang->fatal_no_look << endl;
+                exit(6);
+            }
         }
     }
 }
@@ -153,7 +180,8 @@ string GetLedName(string type) {
             return name;
         }
     }
-    return "";
+    cout << "[L2K] FATAL: " << type << " " << lang->fatal_no_led << endl;
+    exit(5);
 }
 
 int getCpu() {
@@ -234,7 +262,7 @@ int main(int argc, char *argv[]) {
             break;
         case 'h': {
             printf("================= L2K ==================\n");
-            printf("         Load 2 KeyboardLED v" L2KVER"        \n");
+            printf("         Load 2 KeyboardLED v" L2KVER "        \n");
             printf("   Map system metrics to keyboard LEDs  \n");
             printf("============================= OwnderDuck\n");
             cout << "[L2K] HELP: " << lang->help_front << endl;
@@ -254,7 +282,7 @@ int main(int argc, char *argv[]) {
         }
     }
     printf("================= L2K ==================\n");
-    printf("         Load 2 KeyboardLED v" L2KVER"        \n");
+    printf("         Load 2 KeyboardLED v" L2KVER "        \n");
     printf("   Map system metrics to keyboard LEDs  \n");
     printf("============================= OwnderDuck\n");
 
@@ -329,17 +357,23 @@ int main(int argc, char *argv[]) {
             if (usage > threshold) {
                 if (!state) {
                     state = true;
-                    pwrite(fd, "1", 1, 0);
+                    (void)pwrite(fd, "1", 1, 0);
+                }
+            } else if (usage <= 0) {
+                if (state) {
+                    state = false;
+                    (void)pwrite(fd, "0", 1, 0);
                 }
             } else {
                 double interval = frequency - (usage * frequency * 1.0 / threshold);
                 if (interval < 2) interval = 2;
+                if (usage == 1) interval = 1;
                 if (tick % (int)interval == 0) {
                     state = true;
-                    pwrite(fd, "1", 1, 0);
+                    (void)pwrite(fd, "1", 1, 0);
                 } else if (state) {
                     state = false;
-                    pwrite(fd, "0", 1, 0);
+                    (void)pwrite(fd, "0", 1, 0);
                 }
             }
         };
@@ -356,5 +390,6 @@ int main(int argc, char *argv[]) {
         pwrite(ledNow.fd, "0", 1, 0);
         close(ledNow.fd);
     }
+    cout<<endl;
     return 0;
 }
