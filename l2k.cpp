@@ -1,25 +1,27 @@
+#include <fcntl.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <chrono>
 #include <csignal>
 #include <cstring>
-#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <pwd.h>
+#include <map>
 #include <string>
-#include <sys/stat.h>
 #include <thread>
-#include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#define L2KVER "3.2.1"
+#define L2KVER "3.2.2"
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define LIKELY(x)   __builtin_expect(!!(x), 1)
-    #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
-    #define LIKELY(x)   (x)
-    #define UNLIKELY(x) (x)
+#define LIKELY(x) (x)
+#define UNLIKELY(x) (x)
 #endif
 
 using namespace std;
@@ -36,17 +38,12 @@ struct LanguagePack {
 };
 
 #define HAS_REAL_STRUCT
-_Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-W#pragma-messages\"")
+
 #pragma message("Compiling L2K Version: " L2KVER)
 #if __has_include("i18n.h")
-    #pragma message("I18N support enabled.")
-    _Pragma("clang diagnostic pop")
     #include "i18n.h"
     #define HAS_I18N
 #endif
-    _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-W#warnings\"")
-    #warning "Warning: i18n.h not found, falling back to English."
-    _Pragma("clang diagnostic pop")
 const LanguagePack en_fallback = {
     "Loading configuration from: ",
     "Default configuration created with global write permissions.",
@@ -71,14 +68,14 @@ const LanguagePack en_fallback = {
     "were not found on this system. Check /etc/l2k.conf"
 };
 #ifdef HAS_I18N
-    const LanguagePack *lang = &en_US; // 指向 i18n.h 里的数据
+    const LanguagePack *lang = &en_US;
 #else
     const LanguagePack *lang = &en_fallback;
 #endif
 /* clang-format on */
 void init_i18n() {
 #ifdef HAS_I18N
-    char *env = getenv("LANG");
+    char* env = getenv("LANG");
     if (env && string(env).find("zh_CN") != string::npos) {
         lang = &zh_CN;
     }
@@ -94,13 +91,13 @@ struct ledInfo {
     string diskName;
     int fd;
     bool state = 0;
-    int *usageSource;
+    int* usageSource;
 };
 
 unordered_map<string, int> diskUsageList;
 
 string GetLedName(string type);
-void readConfig(vector<ledInfo> &v, int &th, int &fr) {
+void readConfig(vector<ledInfo>& v, int& th, int& fr) {
     fs::path config_path = "/etc/l2k.conf";
     if (!fs::exists(config_path)) {
         ofstream outfile(config_path);
@@ -151,7 +148,7 @@ void readConfig(vector<ledInfo> &v, int &th, int &fr) {
         string name, type;
         if (ss >> name >> type) {
             string fullName = GetLedName(name);
-            string path     = base_path + fullName + "/brightness";
+            string path = base_path + fullName + "/brightness";
             v.push_back({fullName, path, type, "frog"});
 
             if (type == "DISK") {
@@ -173,7 +170,7 @@ void readConfig(vector<ledInfo> &v, int &th, int &fr) {
 void listLed() {
     string base_path = "/sys/class/leds/";
     cout << "Found LEDs:";
-    for (const auto &entry : fs::directory_iterator(base_path)) {
+    for (const auto& entry : fs::directory_iterator(base_path)) {
         string name = entry.path().filename().string();
         cout << " " << name;
     }
@@ -182,7 +179,7 @@ void listLed() {
 
 string GetLedName(string type) {
     string base_path = "/sys/class/leds/";
-    for (const auto &entry : fs::directory_iterator(base_path)) {
+    for (const auto& entry : fs::directory_iterator(base_path)) {
         string name = entry.path().filename().string();
         if (name.size() >= type.size() &&
             name.substr(name.size() - type.size(), type.size()) == type) {
@@ -208,9 +205,9 @@ int getCpu() {
         i++;
     }
     unsigned long long total_diff = total - lastTotal;
-    unsigned long long idle_diff  = idle - lastIdle;
-    lastTotal                     = total;
-    lastIdle                      = idle;
+    unsigned long long idle_diff = idle - lastIdle;
+    lastTotal = total;
+    lastIdle = idle;
     return (total_diff == 0) ? 0 : (1.0 - static_cast<double>(idle_diff) / total_diff) * 100;
 }
 int getRam() {
@@ -224,38 +221,56 @@ int getRam() {
     }
     return (total > 0) ? (static_cast<double>(total - available) / total) * 100 : 0;
 }
-int getDiskBusy(const string &dev) {
-    static size_t last_io_ms = 0;
-    static auto last_time    = chrono::steady_clock::now();
-    auto get_io              = [&](const string &d) -> size_t {
+
+int getDiskBusy(const string& dev) {
+    struct Stat {
+        size_t io_ms;
+        chrono::steady_clock::time_point ts;
+    };
+    static map<string, Stat> history;
+
+    auto get_io = [&](const string& d) -> size_t {
         ifstream file("/proc/diskstats");
         string line;
         while (getline(file, line)) {
-            if (line.find(" " + d + " ") != string::npos) {
-                stringstream ss(line);
-                string tmp;
-                for (int i = 0; i < 12; ++i)
-                    ss >> tmp;
-                size_t ms;
-                ss >> ms;
-                return ms * 100;
+            stringstream ss(line);
+            string maj, min, name;
+            ss >> maj >> min >> name;
+            if (name == d) {
+                size_t val = 0;
+                for (int i = 0; i < 10; ++i) ss >> val;
+                return val;
             }
         }
         return 0;
     };
+
     size_t cur_io = get_io(dev);
     auto cur_time = chrono::steady_clock::now();
-    long long dur = chrono::duration_cast<chrono::milliseconds>(cur_time - last_time).count();
-    double ratio  = (dur > 0) ? (double)(cur_io - last_io_ms) / dur : 0.0;
-    last_io_ms    = cur_io;
-    last_time     = cur_time;
-    int usage     = (int)(ratio * 100);
-    return usage > 100 ? 100 : usage;
+
+    if (history.find(dev) == history.end()) {
+        history[dev] = {cur_io, cur_time};
+        return 0;
+    }
+
+    Stat& prev = history[dev];
+    auto duration = chrono::duration_cast<chrono::milliseconds>(cur_time - prev.ts).count();
+
+    int usage = 0;
+    if (duration > 0) {
+        double delta_io = (double)(cur_io - prev.io_ms);
+        usage = (int)((delta_io * 100.0) / duration);
+    }
+
+    prev.io_ms = cur_io;
+    prev.ts = cur_time;
+
+    return (usage > 100) ? 100 : usage;
 }
 
 volatile sig_atomic_t alive = 1;
 void signalHandler(int signum) { alive = false; }
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
@@ -263,31 +278,30 @@ int main(int argc, char *argv[]) {
 
     int opt;
     bool runAsDaemon = 1;
-    // "dc:h" 意思是有 d, c, h 三个参数，其中 c 后面必须带值 (冒号表示)
     while ((opt = getopt(argc, argv, "fhv")) != -1) {
         switch (opt) {
-        case 'f':
-            runAsDaemon = 0;
-            break;
-        case 'h': {
-            printf("================= L2K ==================\n");
-            printf("         Load 2 KeyboardLED v" L2KVER "      \n");
-            printf("   Map system metrics to keyboard LEDs  \n");
-            printf("============================= OwnderDuck\n");
-            cout << "[L2K] HELP: " << lang->help_front << endl;
-            cout << "[L2K] HELP: " << lang->help_version << endl;
-            cout << "[L2K] HELP: " << lang->help_stop << endl;
-            cout << "[L2K] HELP: " << lang->help_config << endl;
-            printf("================ ABOUT =================\n");
-            printf("           My Blog: froog.icu           \n");
-            printf("    repo: github.com/OwnderDuck/L2K/    \n");
+            case 'f':
+                runAsDaemon = 0;
+                break;
+            case 'h': {
+                printf("================= L2K ==================\n");
+                printf("         Load 2 KeyboardLED v" L2KVER "      \n");
+                printf("   Map system metrics to keyboard LEDs  \n");
+                printf("============================= OwnderDuck\n");
+                cout << "[L2K] HELP: " << lang->help_front << endl;
+                cout << "[L2K] HELP: " << lang->help_version << endl;
+                cout << "[L2K] HELP: " << lang->help_stop << endl;
+                cout << "[L2K] HELP: " << lang->help_config << endl;
+                printf("================ ABOUT =================\n");
+                printf("           My Blog: froog.icu           \n");
+                printf("    repo: github.com/OwnderDuck/L2K/    \n");
 
-            return 0;
-        }
-        case 'v': {
-            cout << "[L2K] VERSION: " L2KVER << endl;
-            return 0;
-        }
+                return 0;
+            }
+            case 'v': {
+                cout << "[L2K] VERSION: " L2KVER << endl;
+                return 0;
+            }
         }
     }
     printf("================= L2K ==================\n");
@@ -299,7 +313,7 @@ int main(int argc, char *argv[]) {
     listLed();
     int threshold, frequency;
     readConfig(led, threshold, frequency);
-    for (ledInfo &ledNow : led) {
+    for (ledInfo& ledNow : led) {
         ledNow.fd = open(ledNow.path.c_str(), O_WRONLY);
         if (ledNow.fd < 0) {
             cerr << "[L2K] FATAL: " << lang->fatal_open_led1 << ledNow.path << endl;
@@ -308,27 +322,27 @@ int main(int argc, char *argv[]) {
         }
     }
     int cpuUsage = 0, ramUsage = 0, diskUsage = 0;
-    for (ledInfo &ledNow : led) {
+    for (ledInfo& ledNow : led) {
         if (ledNow.lookLoad == "CPU") ledNow.usageSource = &cpuUsage;
         if (ledNow.lookLoad == "RAM") ledNow.usageSource = &ramUsage;
         if (ledNow.lookLoad == "DISK") ledNow.usageSource = &diskUsageList[ledNow.diskName];
     }
-    int *displayDiskUsage  = nullptr;
+    int* displayDiskUsage = nullptr;
     string displayDiskName = "None";
 
-    for (ledInfo &ledNow : led) {
+    for (ledInfo& ledNow : led) {
         if (ledNow.lookLoad == "DISK") {
             diskUsageList[ledNow.diskName] = 0;
-            ledNow.usageSource             = &diskUsageList[ledNow.diskName];
+            ledNow.usageSource = &diskUsageList[ledNow.diskName];
             if (displayDiskUsage == nullptr) {
                 displayDiskUsage = ledNow.usageSource;
-                displayDiskName  = ledNow.diskName;
+                displayDiskName = ledNow.diskName;
             }
         }
     }
     auto next_tick = chrono::steady_clock::now();
-    long duration  = 0;
-    int tick       = 0;
+    long duration = 0;
+    int tick = 0;
     if (runAsDaemon) {
         cout << "[L2K] INFO: " << lang->info_daemon << endl;
         cout << "[L2K] INFO: " << lang->info_stop << endl;
@@ -346,15 +360,11 @@ int main(int argc, char *argv[]) {
             cpuUsage = getCpu();
             ramUsage = getRam();
 
-            for (ledInfo &ledNow : led) {
+            for (ledInfo& ledNow : led) {
                 if (ledNow.lookLoad == "DISK") {
                     diskUsageList[ledNow.diskName] = getDiskBusy(ledNow.diskName);
                 }
             }
-            /*
-            printf("\rCPU:%3d%% RAM:%3d%% sda:%3d%% MSPT:%6.2fus    ",
-                cpuUsage, ramUsage, diskUsageList["sda"], (double)duration / 1000.0);
-                */
             if (!runAsDaemon) {
                 printf("\rCPU:%3d%% RAM:%3d%% %s:%3d%% MSPT:%6.2fus    ", cpuUsage, ramUsage,
                        displayDiskName.c_str(), displayDiskUsage ? *displayDiskUsage : 0,
@@ -362,8 +372,8 @@ int main(int argc, char *argv[]) {
                 fflush(stdout);
             }
         }
-        auto processLed = [threshold, frequency, &tick](int usage, bool &state, int fd) {
-            if (LIKELY(usage > 0 && usage <= threshold)) { 
+        auto processLed = [threshold, frequency, &tick](int usage, bool& state, int fd) {
+            if (LIKELY(usage > 0 && usage <= threshold)) {
                 int interval = frequency - (usage * frequency / threshold);
                 if (interval < 2) interval = 2;
 
@@ -372,33 +382,31 @@ int main(int argc, char *argv[]) {
                     state = should_be_on;
                     (void)pwrite(fd, state ? "1" : "0", 1, 0);
                 }
-            }
-            else if (usage > threshold) {
+            } else if (usage > threshold) {
                 if (!state) {
                     state = true;
                     (void)pwrite(fd, "1", 1, 0);
                 }
-            }
-            else { 
+            } else {
                 if (state) {
                     state = false;
                     (void)pwrite(fd, "0", 1, 0);
                 }
             }
         };
-        for (ledInfo &ledNow : led) {
+        for (ledInfo& ledNow : led) {
             processLed(*(ledNow.usageSource), ledNow.state, ledNow.fd);
         }
 
         auto tick_end = chrono::steady_clock::now();
-        duration      = chrono::duration_cast<chrono::nanoseconds>(tick_end - tick_start).count();
+        duration = chrono::duration_cast<chrono::nanoseconds>(tick_end - tick_start).count();
 
         this_thread::sleep_until(next_tick);
     }
-    for (ledInfo &ledNow : led) {
+    for (ledInfo& ledNow : led) {
         pwrite(ledNow.fd, "0", 1, 0);
         close(ledNow.fd);
     }
-    cout<<endl;
+    cout << endl;
     return 0;
 }
