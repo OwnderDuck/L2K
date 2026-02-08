@@ -6,7 +6,7 @@
 
 **Pending: Translation: Translated by Gemini-3-Flash; verification required.**
 
-# L2K (Load 2 KeyboardLED) v3.2.1
+# L2K (Load 2 KeyboardLED) v3.2.2
 
 Ultra-lightweight Linux system monitor. Gone are the complex GUIs—we use LEDs for display.
 
