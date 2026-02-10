@@ -45,11 +45,14 @@ struct LanguagePack {
     #define HAS_I18N
 #endif
 const LanguagePack en_fallback = {
-    "Loading configuration from: ",
+    // MYY is a meaningless placeholder.
+    "Available LEDs:",/*LED list*/
+    "Loading configuration from: `/etc/l2k.conf`",
     "MYY",
     "MYY",
     "Running in daemon mode (background).",
     "To stop the service, run: sudo pkill l2k",
+    "Use -l to view all system LEDs.",
     "Stop: sudo pkill l2k",
     "Foreground mode: Use -f to keep the process in your terminal.",
     "Version: Use -v to display current version.",
@@ -61,8 +64,8 @@ const LanguagePack en_fallback = {
     "Permission denied while accessing ",/*LED path*/ "Try running with 'sudo' or check if the device exists.",
     "Failed to daemonize process.",
     "Could not create `/etc/l2k.conf` . Please check directory permissions.",
-    "were not found on this system. Check /etc/l2k.conf",
-    "were not found on this system. Check /etc/l2k.conf"
+    /*LED name*/"were not found on this system. Check /etc/l2k.conf",
+    /*metric name*/"were not found on this system. Check /etc/l2k.conf"
 };
 #ifdef HAS_I18N
     const LanguagePack *lang = &en_US;
