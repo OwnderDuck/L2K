@@ -14,7 +14,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#define L2KVER "3.2.2"
+#define L2KVER "3.2.3"
 
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -34,7 +34,7 @@ struct LanguagePack {
     const char *help_stop; const char *help_front; const char *help_version; const char *help_config;
     const char *conf_th_desc; const char *conf_fr_desc; const char *conf_map_led;
     const char *fatal_chmod; const char *fatal_open_led1; const char *fatal_open_led2; const char *fatal_daemon;
-    const char *fatal_failed_to_create1; const char *fatal_failed_to_create2; const char *fatal_no_led; const char *fatal_no_look;
+    const char *fatal_failed_to_create; const char *fatal_no_led; const char *fatal_no_look;
 };
 
 #define HAS_REAL_STRUCT
@@ -46,9 +46,8 @@ struct LanguagePack {
 #endif
 const LanguagePack en_fallback = {
     "Loading configuration from: ",
-    "Default configuration created with global write permissions.",
-    "Authentication required: Type 'frog' and press Enter to grant write "
-    "access to l2k.conf, or any other key to skip.",
+    "MYY",
+    "MYY",
     "Running in daemon mode (background).",
     "To stop the service, run: sudo pkill l2k",
     "Stop: sudo pkill l2k",
@@ -58,12 +57,10 @@ const LanguagePack en_fallback = {
     "Threshold (0-100) for constant LED light.",
     "Base flash interval at 1% load (in 10ms ticks).",
     "LED_NAME  METRIC(CPU/RAM/DISK)  DISK_NAME(if applicable). Example:",
-    "Failed to set global write permissions (chmod 0666).",
-    "Permission denied while accessing ",
-    "Try running with 'sudo' or check if the device exists.",
+    "MYY",
+    "Permission denied while accessing ",/*LED path*/ "Try running with 'sudo' or check if the device exists.",
     "Failed to daemonize process.",
-    "Could not create configuration file at ",
-    ". Please check directory permissions.",
+    "Could not create `/etc/l2k.conf` . Please check directory permissions.",
     "were not found on this system. Check /etc/l2k.conf",
     "were not found on this system. Check /etc/l2k.conf"
 };
@@ -125,8 +122,7 @@ void readConfig(vector<ledInfo>& v, int& th, int& fr) {
             outfile << "#    repo: github.com/OwnderDuck/L2K/    #" << endl;
             outfile.close();
         } else {
-            cerr << "[L2K] FATAL: " << lang->fatal_failed_to_create1 << config_path
-                 << lang->fatal_failed_to_create2 << endl;
+            cerr << "[L2K] FATAL: " << lang->fatal_failed_to_create << endl;
             exit(2);
         }
     }
