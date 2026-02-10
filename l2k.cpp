@@ -14,7 +14,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#define L2KVER "3.3.0"
+#define L2KVER "3.3.1"
 
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -279,10 +279,13 @@ int main(int argc, char* argv[]) {
                 runAsDaemon = 0;
                 break;
             case 'h': {
-                printf("================= L2K ==================\n");
-                printf("         Load 2 KeyboardLED v" L2KVER "      \n");
-                printf("   Map system metrics to keyboard LEDs  \n");
-                printf("============================= OwnderDuck\n");
+
+                printf(" ██╗     ██████╗ ██╗  ██╗\n");
+                printf(" ██║     ╚════██╗██║ ██╔╝   Load 2 KeyboardLED v" L2KVER "\n");
+                printf(" ██║      █████╔╝█████╔╝    Map system metrics to keyboard LEDs \n");
+                printf(" ██║     ██╔═══╝ ██╔═██╗    Github: OwnderDuck/L2K/\n");
+                printf(" ███████╗███████╗██║  ██╗\n");
+                printf(" ╚══════╝╚══════╝╚═╝  ╚═╝\n");
                 cout << "[L2K] HELP: " << lang->help_front << endl;
                 cout << "[L2K] HELP: " << lang->help_version << endl;
                 cout << "[L2K] HELP: " << lang->help_stop << endl;
@@ -304,12 +307,13 @@ int main(int argc, char* argv[]) {
                 return 0;
             }
         }
-    }
-    printf("================= L2K ==================\n");
-    printf("         Load 2 KeyboardLED v" L2KVER "      \n");
-    printf("   Map system metrics to keyboard LEDs  \n");
-    printf("============================= OwnderDuck\n");
-
+    }    
+    printf(" ██╗     ██████╗ ██╗  ██╗\n");
+    printf(" ██║     ╚════██╗██║ ██╔╝   Load 2 KeyboardLED v" L2KVER "\n");
+    printf(" ██║      █████╔╝█████╔╝    Map system metrics to keyboard LEDs \n");
+    printf(" ██║     ██╔═══╝ ██╔═██╗    Github: OwnderDuck/L2K/\n");
+    printf(" ███████╗███████╗██║  ██╗\n");
+    printf(" ╚══════╝╚══════╝╚═╝  ╚═╝\n");
     vector<ledInfo> led;
     cout << "[L2K] INFO: " << lang->info_ls << endl;
     listLed();
