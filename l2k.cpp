@@ -14,7 +14,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-#define L2KVER "3.2.3"
+#define L2KVER "3.3.0"
 
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -30,8 +30,8 @@ namespace fs = filesystem;
 // --- I18N Logic Start ---
 /* clang-format off */
 struct LanguagePack {
-    const char *info_load_conf; const char *info_create_conf; const char *info_ask_auth; const char *info_daemon; const char *info_stop;
-    const char *help_stop; const char *help_front; const char *help_version; const char *help_config;
+    const char *info_ls; const char *info_load_conf; const char *info_create_conf; const char *info_ask_auth; const char *info_daemon; const char *info_stop;
+    const char *help_ls; const char *help_stop; const char *help_front; const char *help_version; const char *help_config;
     const char *conf_th_desc; const char *conf_fr_desc; const char *conf_map_led;
     const char *fatal_chmod; const char *fatal_open_led1; const char *fatal_open_led2; const char *fatal_daemon;
     const char *fatal_failed_to_create; const char *fatal_no_led; const char *fatal_no_look;
@@ -126,7 +126,7 @@ void readConfig(vector<ledInfo>& v, int& th, int& fr) {
             exit(2);
         }
     }
-    cout << "[L2K] INFO: " << lang->info_load_conf << config_path << endl;
+    cout << "[L2K] INFO: " << lang->info_load_conf << endl;
 
     ifstream inFile(config_path);
     string line;
@@ -165,7 +165,6 @@ void readConfig(vector<ledInfo>& v, int& th, int& fr) {
 }
 void listLed() {
     string base_path = "/sys/class/leds/";
-    cout << "Found LEDs:";
     for (const auto& entry : fs::directory_iterator(base_path)) {
         string name = entry.path().filename().string();
         cout << " " << name;
@@ -274,7 +273,7 @@ int main(int argc, char* argv[]) {
 
     int opt;
     bool runAsDaemon = 1;
-    while ((opt = getopt(argc, argv, "fhv")) != -1) {
+    while ((opt = getopt(argc, argv, "fhvl")) != -1) {
         switch (opt) {
             case 'f':
                 runAsDaemon = 0;
@@ -288,6 +287,7 @@ int main(int argc, char* argv[]) {
                 cout << "[L2K] HELP: " << lang->help_version << endl;
                 cout << "[L2K] HELP: " << lang->help_stop << endl;
                 cout << "[L2K] HELP: " << lang->help_config << endl;
+                cout << "[L2K] HELP: " << lang->help_ls << endl;
                 printf("================ ABOUT =================\n");
                 printf("           My Blog: froog.icu           \n");
                 printf("    repo: github.com/OwnderDuck/L2K/    \n");
@@ -298,6 +298,11 @@ int main(int argc, char* argv[]) {
                 cout << "[L2K] VERSION: " L2KVER << endl;
                 return 0;
             }
+            case 'l': {
+                cout<<"[L2K] INFO: "<<lang->info_ls;
+                listLed();
+                return 0;
+            }
         }
     }
     printf("================= L2K ==================\n");
@@ -306,6 +311,7 @@ int main(int argc, char* argv[]) {
     printf("============================= OwnderDuck\n");
 
     vector<ledInfo> led;
+    cout << "[L2K] INFO: " << lang->info_ls << endl;
     listLed();
     int threshold, frequency;
     readConfig(led, threshold, frequency);
