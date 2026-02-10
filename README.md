@@ -6,7 +6,7 @@
 
 # L2K (Load 2 KeyboardLED) v3.2.2
 
-[English](docs/README_EN.md)
+[**English**](docs/README_EN.md)
 
 超轻量级 Linux 系统监控工具，我们除去了繁杂的 GUI，使用 LED 灯来显示。
 
