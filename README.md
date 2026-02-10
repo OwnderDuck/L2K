@@ -8,7 +8,7 @@
 
 **翻译：需要会英文的人**
 
-# L2K (Load 2 KeyboardLED) v3.3.0
+# L2K (Load 2 KeyboardLED) v3.3.1
 
 [**English**](docs/README_EN.md)
 
