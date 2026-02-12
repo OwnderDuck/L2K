@@ -8,6 +8,10 @@
 
 **翻译：需要会英文的人**
 
+<p align="center">
+  <img src="docs/l2k.gif" width="600px" alt="L2K in action">
+</p>
+
 # L2K (Load 2 KeyboardLED) v3.3.1
 
 [**English**](docs/README_EN.md)
