@@ -1,11 +1,9 @@
-**Warning: Lacks thorough testing!!! | 警告：未经大量测试！！！**
+[**English**](docs/README_EN.md)
 
-**You’re still helpful, even if it's just for translations. | 帮助我：即使只是翻译！**
-
-**Pending: Native English speakers (or fluent speakers) needed to rewrite i18n and README_EN.md.**
-
-**Pending: Translation: Translated by Gemini-3-Flash; verification required.**
-
+**Warning: Lacks thorough testing!!! | 警告：未经大量测试！！！**  
+**You’re still helpful, even if it's just for translations. | 帮助我：即使只是翻译！**  
+**Pending: Native English speakers (or fluent speakers) needed to rewrite i18n and README_EN.md.**  
+**Pending: Translation: Translated by Gemini-3-Flash; verification required.**  
 **翻译：需要会英文的人**
 
 <p align="center">
@@ -14,18 +12,13 @@
 
 # L2K (Load 2 KeyboardLED) v3.3.1
 
-[**English**](docs/README_EN.md)
-
-Ultra-lightweight Linux system monitor. Gone are the complex GUIs—we use LEDs for display.
-
+Ultra-lightweight Linux system monitor. Gone are the complex GUIs—we use LEDs for display.  
 超轻量级 Linux 系统监控工具，我们除去了繁杂的 GUI，使用 LED 灯来显示。
 
-No LEDs? You’ve got three on your keyboard. No keyboard backlights? Try your NIC or disk indicators—any kernel-managed LED will do.
-
+No LEDs? You’ve got three on your keyboard. No keyboard backlights? Try your NIC or disk indicators—any kernel-managed LED will do.  
 什么？你没有 LED 灯？你键盘上不是有三个吗？没有键盘灯？看看网卡灯、硬盘灯……任何内核管理的灯。
 
-If you lack even those, you're on your own.
-
+If you lack even those, you're on your own.  
 要是都没有，我帮不了你。。。
 ## Features
 - **Real-time Monitoring | 实时监控**：Track CPU, RAM, and Disk utilization (multi-disk support included). | CPU、RAM、磁盘繁忙比率（多个盘也行）。
@@ -35,12 +28,10 @@ If you lack even those, you're on your own.
 - **i18n Support | 多语言支持**: Supports both Chinese and English. | 支持中英文。
 ## Usage
 ### Running
-**Root privileges** are required to write to the LED devices under `/sys/class/leds/` .
-
+**Root privileges** are required to write to the LED devices under `/sys/class/leds/` .  
 需要 **root** 权限，因为要写入 `/sys/class/leds/` 下的灯。
 
-By default, the tool runs in **background mode**.
-
+By default, the tool runs in **background mode**.  
 默认为后台模式运行。
 
 Supported Command Line Arguments | 支持命令行参数:
@@ -48,17 +39,14 @@ Supported Command Line Arguments | 支持命令行参数:
 - `-h` Show help message. | 显示帮助。
 - `-v` Display version information. | 版本号？
 
-To stop the program, use `sudo pkill l2k` . (We have a graceful shutdown, but how "graceful" it actually is, nobody knows.).
-
+To stop the program, use `sudo pkill l2k` . (We have a graceful shutdown, but how "graceful" it actually is, nobody knows.)  
 使用 `sudo pkill l2k` 来关闭。（应该有安全关闭的）。
 
 ### Configuration
-The configuration is stored at `/etc/l2k.conf`.
+The configuration is stored at `/etc/l2k.conf`.  
+配置存在 `/etc/l2k.conf`。
 
-存在 `/etc/l2k.conf`。
-
-Lines starting with `#` are ignored as comments.
-
+Lines starting with `#` are ignored as comments.  
 忽略所有 `#` 开头的行：
 
 **Line 1**: Contains two integers.
@@ -78,12 +66,10 @@ Lines starting with `#` are ignored as comments.
 - 磁盘名，如 “sda”、“sdb”等。（仅在指标名为 DISK 时生效）
 
 ### Compilation
-Requires C++17 on Linux.
-
+Requires C++17 on Linux.  
 Linux 下，需要 C++17。
 ```bash
 g++ --std=c++17 l2k.cpp -o l2k
 ```
-If `i18n.h` is missing, the tool will default to **English**.
-
+If `i18n.h` is missing, the tool will default to **English**.  
 如果找不到 `i18n.h`，就默认使用英文。
