@@ -19,6 +19,8 @@ If you lack even those, you're on your own.
 - **Customizable**: Customize LED mapping, thresholds, and flash frequency via `/etc/l2k.conf` .
 - **Silent Mode**: Runs quietly in the background by default.
 - **Multilingual Support**: Supports both Chinese and English.
+## Installation
+Download [install.sh](/install.sh). Run `chmod +x install.sh` and `sudo ./install.sh [optional installation directory]`.
 ## Usage
 ### Running
 **Root privileges** are required to write to the LED devices under `/sys/class/leds/` .
