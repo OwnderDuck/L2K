@@ -26,6 +26,11 @@ If you lack even those, you're on your own.
 - **Customizable | 可定制**: Customize LED mapping, thresholds, and flash frequency via `/etc/l2k.conf` . | 通过 `/etc/l2k.conf` 自定义 LED映射关系、阈值与闪烁频率。
 - **Silent Mode | 静默模式**：Runs quietly in the background by default. | 默认在后台静默运行。
 - **i18n Support | 多语言支持**: Supports both Chinese and English. | 支持中英文。
+## Installation
+
+Download [install.sh](install.sh). Run `chmod +x install.sh` and `sudo ./install.sh [optional installation directory]`.  
+下载 [install.sh](install.sh)。执行 `chmod +x install.sh` 和 `sudo ./install.sh [（可选）指定安装目录]`。
+
 ## Usage
 ### Running
 **Root privileges** are required to write to the LED devices under `/sys/class/leds/` .  
