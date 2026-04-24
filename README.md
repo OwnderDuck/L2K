@@ -2,6 +2,8 @@
 
 Ultra-lightweight Linux system monitor. Gone are the complex GUIs—we use LEDs for display.
 
+look GIF 👇
+
 <p align="center">
   <img src="docs/l2k.gif" width="600px" alt="L2K in action">
 </p>
