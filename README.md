@@ -55,6 +55,9 @@ g++ --std=c++17 l2k.cpp -o l2k
 ```
 If `i18n.h` is missing, the tool will default to **English**.
 
+### Bugs
+- Some keyboards store key states in LED states; this is not L2K’s issue.
+
 **Warning: Lacks thorough testing!!!**  
 **You’re still helpful, even if it's just for translations.**  
 **Pending: Native English speakers (or fluent speakers) needed to rewrite i18n and README_EN.md.**  
