@@ -1,3 +1,6 @@
+// Copyright (c) 2026 OwnderDuck
+// SPDX-License-Identifier: MIT
+
 #include <fcntl.h>
 #include <pwd.h>
 #include <sys/stat.h>
