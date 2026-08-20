@@ -1,3 +1,6 @@
+// Copyright (c) 2026 OwnderDuck
+// SPDX-License-Identifier: MIT
+
 #ifndef I18N_H
 #define I18N_H
 #ifndef HAS_REAL_STRUCT
