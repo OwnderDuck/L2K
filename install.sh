@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) 2026 OwnderDuck
+# SPDX-License-Identifier: MIT
 
 # L2K One-click installation script - downloads only two core files
 # Usage: sudo ./install.sh [INSTALL_DIR]
